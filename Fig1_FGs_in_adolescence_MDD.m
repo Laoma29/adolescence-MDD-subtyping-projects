@@ -1,0 +1,270 @@
+
+%% Figure 1a: illustration of Similarity matrix
+addpath('C:\Users\laoma\Desktop\合作课题\青少年抑郁症\亚型数据\NC_Data\2025_adolescent_subtype_mdd\cortical_mapper\slanCM');
+
+pic_path = '../Figure1/results_fig';
+mkdir(pic_path);
+
+load('C:\Users\laoma\Desktop\合作课题\青少年抑郁症\亚型数据\NC_Data\Figure.1\Fig_1_FG_Subtypes_statitsc.mat');
+
+sim_mat = FG_Subtypes_statitsc.Similarity_group;
+sim_mat = [sim_mat(163:302, :); sim_mat(1:162, :); sim_mat(303:507, :)];
+sim_mat = [sim_mat(:, 163:302), sim_mat(:, 1:162), sim_mat(:, 303:507)];
+% imshow(sim_mat, [0.2, 0.8]);
+% 
+% colormap(slanCM(1, 256));
+% set(gca, 'color', 'none'); set(gcf, 'color', 'none');
+% 
+% out_fig_path = fullfile(pic_path, 'Similarity_mat.png');
+% export_fig(out_fig_path, '-m4', '-q100');
+% close;
+% 
+% draw_colorbar(slanCM(1, 256));
+% export_fig(fullfile(pic_path, 'Similarity_mat_colorbar.png'), '-q100');
+% close;
+
+cifti_file_path='C:\Users\laoma\Desktop\合作课题\青少年抑郁症\亚型数据\NC_Data\2025_adolescent_subtype_mdd\src_plot_figs';
+%% Figure 1b functional gradients for subtype1 subtype2 and HC
+% plotting roi-wise data onto cifti-version file.
+schaefer400_roi = ft_read_cifti('C:\Users\laoma\Desktop\合作课题\青少年抑郁症\亚型数据\NC_Data\2025_adolescent_subtype_mdd\src_plot_figs\Schaefer2018_400Parcels_7Networks_order.dlabel.nii');
+
+cifti_template = ft_read_cifti('C:\Users\laoma\Desktop\合作课题\青少年抑郁症\亚型数据\NC_Data\2025_adolescent_subtype_mdd\src_plot_figs\Schaefer2018_400Parcels_7Networks_order.dlabel.nii');
+cifti_template = rmfield(cifti_template, {'parcels', 'parcelslabel', 'parcelsrgba'});
+
+
+load('C:\Users\laoma\Desktop\合作课题\青少年抑郁症\亚型数据\NC_Data\Figure.1\Fig_1_FG_Subtypes_statitsc.mat');
+
+% switch sub1 and sub2, aligning with the first manuscript
+Func_Grad_sub1 = FG_Subtypes_statitsc.depression_subtype_ave2; 
+Func_Grad_sub2 = FG_Subtypes_statitsc.depression_subtype_ave1; 
+Func_Grad_hc = FG_Subtypes_statitsc.graident1_depression_HC_ave; 
+
+max_roi_num = 400;
+for modal = {'Func_Grad_sub1', 'Func_Grad_sub2', 'Func_Grad_hc'}
+    data = zeros(64984, 1);
+    for j = 1: max_roi_num
+        eval(['data(schaefer400_roi.parcels==j) = ', cell2mat(modal), '(j);']);
+    end
+
+    tmp_cifti_template = cifti_template;
+    tmp_cifti_template.dscalar = data;
+    ft_write_cifti(fullfile(cifti_file_path, cell2mat(modal)), tmp_cifti_template, 'parameter', 'dscalar');
+
+end
+
+% plotting files onto surface and plotting colorbars.
+addpath('C:\Users\laoma\Desktop\合作课题\青少年抑郁症\亚型数据\NC_Data\2025_adolescent_subtype_mdd\cortical_mapper\slanCM');
+addpath(genpath('../cortical_mapper'));
+
+cifti_file_path = 'C:\Users\laoma\Desktop\合作课题\青少年抑郁症\亚型数据\NC_Data\2025_adolescent_subtype_mdd\src_plot_figs\';
+pic_path = 'C:\Users\laoma\Desktop\合作课题\青少年抑郁症\亚型数据\NC_Data\2025_adolescent_subtype_mdd\src_plot_figs\';
+mkdir(pic_path);
+
+for modal = {'Func_Grad_sub1', 'Func_Grad_sub2', 'Func_Grad_hc'}
+    c_map = flip(slanCM(95, 256));
+
+    cifti_file = fullfile(cifti_file_path, [cell2mat(modal), '.dscalar.nii']);
+    create_combined_cortical_image(cifti_file, 'cmap', c_map, 'color_range', [-1, 1]);
+    export_fig(fullfile(pic_path, [cell2mat(modal), '.png']), '-m4', '-q100');
+    close;
+
+    draw_colorbar(c_map);
+    export_fig(fullfile(pic_path, [cell2mat(modal), '_colorbar.png']), '-q100');
+    close;
+end
+
+%% Figure 1c: basic properties
+addpath('~/VDisk1/Xinyu/softwares/export_fig-3.38');
+
+pic_path = '../Figure1/results_fig';
+mkdir(pic_path)
+
+color_list = [
+0.764705882352941	0.552941176470588	0.768627450980392
+0.996078431372549	0.850980392156863	0.690196078431373
+0.984313725490196	0.505882352941176	0.450980392156863
+];
+
+% Fig 1c: indiv gradient
+load('/home/xinyu/VDisk1/Xinyu/2025_adolescent_subtype_mdd_redraw/Figure1/Fig_1_FG_Subtypes_statitsc_new.mat');
+data = struct;
+data.indiv_grad_sub1 = FG_Subtypes_statitsc.FG_subtype2;
+data.indiv_grad_sub2 = FG_Subtypes_statitsc.FG_subtype1;
+data.indiv_grad_hc = FG_Subtypes_statitsc.FG_HC;
+
+figure; hold on;
+% draw_violin_scatter_box_plot(data, {'indiv_grad_hc', 'indiv_grad_sub2', 'indiv_grad_sub1'}, 'horizontal', color_list, 1.5);
+draw_violin_box_plot_seperate(data, {'indiv_grad_hc', 'indiv_grad_sub2', 'indiv_grad_sub1'}, 'horizontal', color_list);
+
+out_fig_path = fullfile(pic_path, 'Indiv_Func_Grad.png');
+export_fig(out_fig_path, '-m4', '-q100');
+close;
+
+
+% Fig 1c: similarity
+load('/home/xinyu/VDisk1/Xinyu/2025_adolescent_subtype_mdd_redraw/Figure1/Fig_1_FG_Subtypes_statitsc_new.mat');
+data = struct;
+data.sim_sub1 = FG_Subtypes_statitsc.Similarity_subtype2;
+data.sim_sub2 = FG_Subtypes_statitsc.Similarity_subtype1;
+data.sim_hc = FG_Subtypes_statitsc.Similarity_HC;
+
+figure; hold on;
+% draw_violin_scatter_box_plot(data, {'sim_hc', 'sim_sub2', 'sim_sub1'}, 'horizontal', color_list, 0.25);
+draw_violin_box_plot_seperate(data, {'sim_hc', 'sim_sub2', 'sim_sub1'}, 'horizontal', color_list);
+
+% external settings
+set(gca, 'XTick', [0, 0.25, 0.5, 0.75, 1])
+
+out_fig_path = fullfile(pic_path, 'Similarity_Func_Grad.png');
+export_fig(out_fig_path, '-m4', '-q100');
+close;
+
+% Fig 1c: dispersion
+load('../Figure1/depression_group.mat');
+data = struct;
+data.disper_sub1 = depression_group.Global_depression_sub2;
+data.disper_sub2 = depression_group.Global_depression_sub1;
+data.disper_hc = depression_group.Global_depression_HC;
+
+figure; hold on;
+% draw_violin_scatter_box_plot(data, {'disper_hc', 'disper_sub2', 'disper_sub1'}, 'horizontal', color_list, 3);
+draw_violin_box_plot_seperate(data, {'disper_hc', 'disper_sub2', 'disper_sub1'}, 'horizontal', color_list);
+set(gca, 'YTickLabel', {'', '', '', '0', '0.25'});
+
+out_fig_path = fullfile(pic_path, 'Dispersion_Func_Grad.png');
+export_fig(out_fig_path, '-m4', '-q100');
+close;
+
+
+%% Figure 1d: functional reorganization
+% plotting roi-wise data onto cifti-version file.
+schaefer400_roi = ft_read_cifti('Schaefer2018_400Parcels_7Networks_order.dlabel.nii');
+
+cifti_template = ft_read_cifti('Schaefer2018_400Parcels_7Networks_order.dlabel.nii');
+cifti_template = rmfield(cifti_template, {'parcels', 'parcelslabel', 'parcelsrgba'});
+
+cifti_file_path = '../Figure1/results_cifti';
+mkdir(cifti_file_path);
+
+load('/home/xinyu/VDisk1/Xinyu/2025_adolescent_subtype_mdd_redraw/Figure1/Fig_1_FG_Subtypes_statitsc_new.mat');
+
+% switch sub1 and sub2, aligning with the first manuscript
+Tval_sub1_HC = FG_Subtypes_statitsc.T_value_subtype2_HC; 
+Tval_sub2_HC = FG_Subtypes_statitsc.T_value_subtype1_HC; 
+Tval_sub1_sub2 = FG_Subtypes_statitsc.T_value_subtype1_subype2; 
+
+% setting range [-10, -2] and [2, 10]
+Tval_sub1_HC(Tval_sub1_HC > 0) = Tval_sub1_HC(Tval_sub1_HC > 0) - 2;
+Tval_sub1_HC(Tval_sub1_HC < 0) = Tval_sub1_HC(Tval_sub1_HC < 0) + 2;
+Tval_sub2_HC(Tval_sub2_HC > 0) = Tval_sub2_HC(Tval_sub2_HC > 0) - 2;
+Tval_sub2_HC(Tval_sub2_HC < 0) = Tval_sub2_HC(Tval_sub2_HC < 0) + 2;
+Tval_sub1_sub2(Tval_sub1_sub2 > 0) = Tval_sub1_sub2(Tval_sub1_sub2 > 0) - 2;
+Tval_sub1_sub2(Tval_sub1_sub2 < 0) = Tval_sub1_sub2(Tval_sub1_sub2 < 0) + 2;
+
+max_roi_num = 400;
+for modal = {'Tval_sub1_HC', 'Tval_sub2_HC', 'Tval_sub1_sub2'}
+    data = zeros(64984, 1);
+    for j = 1: max_roi_num
+        eval(['data(schaefer400_roi.parcels==j) = ', cell2mat(modal), '(j);']);
+    end
+
+    tmp_cifti_template = cifti_template;
+    tmp_cifti_template.dscalar = data;
+    ft_write_cifti(fullfile(cifti_file_path, cell2mat(modal)), tmp_cifti_template, 'parameter', 'dscalar');
+
+end
+
+% plotting files onto surface and plotting colorbars.
+addpath('~/VDisk1/Xinyu/plot_fig_subcortex/dependencies/slanCM');
+addpath(genpath('../cortical_mapper'));
+
+cifti_file_path = '../Figure1/results_cifti';
+pic_path = '../Figure1/results_fig';
+mkdir(pic_path);
+
+for modal = {'Tval_sub1_HC', 'Tval_sub2_HC', 'Tval_sub1_sub2'}
+    c_map = flip(slanCM(97, 256));
+
+    cifti_file = fullfile(cifti_file_path, [cell2mat(modal), '.dscalar.nii']);
+    create_combined_cortical_image(cifti_file, 'cmap', c_map, 'color_range', [-5, 5]);
+    export_fig(fullfile(pic_path, [cell2mat(modal), '.png']), '-m4', '-q100');
+    close;
+
+    draw_colorbar(c_map);
+    export_fig(fullfile(pic_path, [cell2mat(modal), '_colorbar.png']), '-q100');
+    close;
+end
+
+%% Figure 1e: compute correlation between T-map and NeuroSynth
+addpath('~/VDisk1/Xinyu/plot_fig_subcortex/dependencies/slanCM');
+addpath('~/VDisk1/Xinyu/plot_fig_subcortex/dependencies/export_fig');
+addpath(genpath('~/VDisk1/Xinyu/softwares/ENIGMA-master/matlab'));
+
+positive_color = [255, 109, 109]; positive_color = positive_color ./ 255;
+negative_color = [101, 101, 255]; negative_color = negative_color ./ 255;
+word_size = [4, 3, 3, 3, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 0];
+
+load('../Figure1/cognitive_map200.mat');
+cogn_map200 = cognitive_map200; clear cognitive_map200;
+cogn_map200([1, 102], :) = [];
+
+cog_term_id = [116 68 41 15 64 87 7 114 91 118 94 67 80 63 100 113 25 28];
+cogn_map200 = cogn_map200(:, cog_term_id);
+cogn_map400 = zeros(400, length(cog_term_id));
+
+load('../Figure1/cognitive_name.mat');
+cogn_name = cognitive_name.textdata(1, 2:end);
+cogn_name = cogn_name(cog_term_id);
+
+% change schaefer 200 to schaefer 400
+schaefer200_roi = ft_read_cifti('Schaefer2018_200Parcels_7Networks_order.dlabel.nii');
+schaefer400_roi = ft_read_cifti('Schaefer2018_400Parcels_7Networks_order.dlabel.nii');
+for i = 1: length(cogn_name)
+    data_200roi = zeros(64984, 1);
+    for j = 1: 200
+        data_200roi(schaefer200_roi.parcels==j) = cogn_map200(j, i);
+    end
+    for j = 1: 400
+        cogn_map400(j, i) = mean(data_200roi(schaefer400_roi.parcels==j));
+    end
+end
+
+max_grad = 3;
+load('../Figure1/Fig_1_FG_Subtypes_statitsc_new.mat');
+Func_reorg = zeros(400, max_grad);
+Func_reorg(:, 1) = FG_Subtypes_statitsc.T_value_subtype2_HC;
+Func_reorg(:, 2) = FG_Subtypes_statitsc.T_value_subtype1_HC;
+Func_reorg(:, 3) = FG_Subtypes_statitsc.T_value_subtype1_subype2;
+
+age_effect_positive_cogname = cell(max_grad, length(cog_term_id));
+age_effect_positive_r_val = zeros(max_grad, length(cog_term_id));
+age_effect_negative_cogname = cell(max_grad, length(cog_term_id));
+age_effect_negative_r_val = zeros(max_grad, length(cog_term_id));
+
+for grad = 1: max_grad
+    % positive
+    age_effect_positive = Func_reorg(:, grad);
+    age_effect_positive(age_effect_positive < 0) = 0;
+    r_val = zeros(size(cog_term_id));
+    for i = 1: length(cog_term_id)
+        r_val(i) = corr(age_effect_positive, cogn_map400(:, i), 'type', 'Spearman');
+    end
+    [r_val, ind] = sort(r_val, 'descend');
+    age_effect_positive_cogname(grad, :) = cogn_name(ind);
+    % age_effect_positive_cogname(grad, r_val < 0) = cellstr("");
+    age_effect_positive_r_val(grad, :) = r_val;
+
+
+    % negative
+    age_effect_negative = -Func_reorg(:, grad);
+    age_effect_negative(age_effect_negative < 0) = 0;
+    r_val = zeros(size(cog_term_id));
+    for i = 1: length(cog_term_id)
+        r_val(i) = corr(age_effect_negative, cogn_map400(:, i), 'type', 'Spearman');
+    end
+    [r_val, ind] = sort(r_val, 'descend');
+    age_effect_negative_cogname(grad, :) = cogn_name(ind);
+    % age_effect_negative_cogname(grad, r_val < 0) = cellstr("");
+    age_effect_negative_r_val(grad, :) = r_val;
+end
+
